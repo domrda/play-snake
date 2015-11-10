@@ -13,14 +13,11 @@ class GameRoom(player1: String, player2: String) extends Actor with ActorLogging
   var snakes: Set[ActorRef] = Set.empty
   var snake1: List[(Int, Int)] = List.empty
   var snake2: List[(Int, Int)] = List.empty
-  var snakeActor1 : ActorRef = _
-  var snakeActor2 : ActorRef = _
+  var snakeActor1 : ActorRef = null
+  var snakeActor2 : ActorRef = null
   var food : (Int, Int) = _
 
   context.system.scheduler.scheduleOnce(15.minutes, self, PoisonPill)
-  context.system.scheduler.schedule(10.seconds, 250.millis) {
-    snakes.foreach(_ ! Snake.Move)
-  }
 
   def genFood() : (Int, Int) = {
     var gen = (random.nextInt(Games.fieldSize._1), random.nextInt(Games.fieldSize._2))
@@ -43,6 +40,12 @@ class GameRoom(player1: String, player2: String) extends Actor with ActorLogging
       snakes += snake
       food = genFood()
       sender ! Messages.SnakeCreated(snake)
+    }
+    if (snakeActor1 != null && snakeActor2 != null) {
+      context.system.scheduler.schedule(10.seconds, 250.millis) {
+        snakes.foreach(_ ! Snake.Move)
+      }
+      println("Game room active!")
     }
   }
 

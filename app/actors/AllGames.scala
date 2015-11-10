@@ -11,10 +11,11 @@ class AllGames extends Actor with ActorLogging {
     case Messages.Pair(player1, player2) =>
       val room = context.system.actorOf(Props(classOf[GameRoom], player1, player2))
       games += (player1, player2) -> room
+      sender ! Messages.Room(room)
     case Messages.FindGame(player) =>
       println("FindGame from ", sender())
       val gameFound = games.find(complect => complect._1._1 == player || complect._1._2 == player).orNull
-      sender ! Messages.GameFound(gameFound)
+      sender ! Messages.Room(gameFound._2)
     case other => println("Something strange come to Games:" + other)
   }
 }
