@@ -39,14 +39,14 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
     case x : JsValue => (x \ "t").as[String] match {
       case "CreateGame" =>
         val player2 = (x \ "player2").as[String]
-        AllGames() ! Pair(myUid, player2)
+        GamesList() ! Pair(myUid, player2)
         Lobby() ! GetCompany(player2)
         context.become(sendingInvitationWaitingRoom(myUid))
       case "FindPlayers" =>
         Lobby() ! GetList
       case "Connect" =>
         val player = (x \ "player").as[String]
-        AllGames() ! FindGame(player)
+        GamesList() ! FindGame(player)
         context.become(waitingRoom(myUid))
       case _ =>
     }
@@ -99,16 +99,15 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
         }
       case _ =>
     }
-    case State(snake1, snake2, food) =>
-      val coorSnake1 = snake1.map(pair => new Coordinate(pair._1, pair._2))
-      val coorSnake2 = snake2.map(pair => new Coordinate(pair._1, pair._2))
-      out ! Json.toJson(StateCoordinates(coorSnake1, coorSnake2, new Coordinate(food._1, food._2)))
+    case State(snakes, food) =>
+      val transformedCoords = snakes.map(snake => snake.map(pair => new Coordinate(pair._1, pair._2)))
+      out ! Json.toJson(StateCoordinates(transformedCoords, new Coordinate(food._1, food._2)))
   }
 }
 
 object WebSocketActor {
   case class Coordinate(x: Int, y: Int)
-  case class StateCoordinates(snake1: List[Coordinate], snake2: List[Coordinate], food: Coordinate)
+  case class StateCoordinates(snakes: Iterable[List[Coordinate]], food: Coordinate)
   case class Value(t: String, value: String)
   def props(out: ActorRef) = Props(new WebSocketActor(out))
 }

@@ -1,10 +1,9 @@
 package controllers
 
-import actors.{AllGames, Messages, WebSocketActor}
-import play.api.libs.json.JsValue
-import play.api.mvc.WebSocket
-import play.api.mvc._
+import actors.WebSocketActor
 import play.api.Play.current
+import play.api.libs.json.JsValue
+import play.api.mvc.{WebSocket, _}
 
 class Application extends Controller {
   def index = Action {

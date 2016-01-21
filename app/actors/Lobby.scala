@@ -1,23 +1,22 @@
 package actors
 
-import actors.Messages.GetCompany
+import akka.actor.{Actor, ActorRef, Props, Terminated}
+import play.libs.Akka
 
 import scala.util.Random
-
-import akka.actor.{Props, ActorRef, Actor, Terminated}
-import play.libs.Akka
 
 class Lobby extends Actor {
   var players : Map[ActorRef, String] = Map.empty
 
+  def generatePlayerName = Seq.fill(4)(Random.nextInt(Lobby.words.size)).map(i => Lobby.words(i)).mkString
+
   def receive = {
     case Messages.Started =>
       context.watch(sender)
-      val uid = Seq.fill(4)(Random.nextInt(Lobby.words.size)).map(i => Lobby.words(i)).mkString
-      players += sender -> uid
-      sendPlayers
+      players += sender -> generatePlayerName
+      sendPlayers()
     case Messages.GetList =>
-      sendPlayers
+      sendPlayers()
     case Terminated =>
       players -= sender
     case Messages.GetCompany(other) =>
@@ -27,15 +26,15 @@ class Lobby extends Actor {
       println("Something strange come to lobby: " + other)
   }
 
-  def sendPlayers = {
-    val filtered = players filter(p => p._2 != sender)
-    sender ! Messages.Players(players(sender), players.values)
+  def sendPlayers() = {
+    val filtered = players filter(p => p._1 != sender)
+    sender ! Messages.Players(players(sender), filtered.values)
   }
 }
 
 object Lobby {
-  lazy val g = Akka.system().actorOf(Props[Lobby])
-  def apply() = g
+  lazy val lobbyActor = Akka.system().actorOf(Props[Lobby])
+  def apply() = lobbyActor
 
   val words: List[String] = List("Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Lime")
 }
