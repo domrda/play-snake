@@ -18,6 +18,7 @@ object Messages {
   case object GetState extends Serializable
   case class State(snakes: Iterable[List[(Int, Int)]], food: (Int, Int)) extends Serializable
   case class Room(room: ActorRef) extends Serializable
+  case class StopGame(uid: String) extends Serializable
   //Snake
   trait Direction extends Serializable
   case object Up extends Direction
@@ -27,7 +28,7 @@ object Messages {
   //Lobby
   case object Started extends Serializable
   case object GetList extends Serializable
-  case class Players(me: String, everybody: Iterable[String]) extends Serializable
+  case class Players(me: String, everybody: Iterable[String], t: String = "Players") extends Serializable
   case class GetCompany(other: String) extends Serializable
   case class Company(other: ActorRef) extends Serializable
 }

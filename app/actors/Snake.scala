@@ -12,7 +12,7 @@ object Snake {
 }
 
 class Snake extends Actor {
-  println("Snake started")
+  println("Snake started " + self)
 
   import Snake._
   import Messages._
@@ -34,11 +34,15 @@ class Snake extends Actor {
     case Right => if (currentDirection != Left) buffDirection = Right
     case Up => if (currentDirection != Down) buffDirection = Up
 
-    case Food(pos) => currentFood = pos
-    case Move => move()
+    case Food(pos) =>
+      println("Snake: new food " + pos)
+      currentFood = pos
+    case Move =>
+      move()
     case DropTail(index) =>
       println("DropTail "+index)
       currentBlocks = currentBlocks.dropRight(index)
+    case _ => println("Something strange at snake")
   }
 
   def move() = {
@@ -55,6 +59,7 @@ class Snake extends Actor {
         currentBlocks = (head._1, (head._2 + 1) % Games.fieldSize._2) :: currentBlocks
     }
     if (head == currentFood) {
+      println("Snake: Snake ate food")
       sender ! AteFood
     } else {
       currentBlocks = currentBlocks.dropRight(1)

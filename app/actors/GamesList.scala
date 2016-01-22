@@ -12,6 +12,8 @@ class GamesList extends Actor with ActorLogging {
       startGameForPlayers(List(player1, player2))
     case Messages.FindGame(player) =>
       sender ! Messages.Room(games(player))
+    case Messages.StopGame(uid) =>
+      games -= uid
     case other => println("Something strange come to Games:" + other)
   }
 

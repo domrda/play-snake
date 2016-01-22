@@ -1,7 +1,7 @@
 package actors
 
 import actors.WebSocketActor.{Coordinate, StateCoordinates, Value}
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import play.api.libs.json.{JsValue, Json}
@@ -19,6 +19,8 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
   implicit val playersWrites = Json.writes[Players]
   implicit val valueWrites = Json.writes[Value]
 
+  var snakeCancellable : Cancellable = null
+
   Lobby() ! Started
 
   def receive = initial
@@ -26,6 +28,7 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
   def initial = LoggingReceive {
     case x : JsValue => (x \ "t").as[String] match {
       case "FindPlayers" =>
+        println("FindPlayers")
         Lobby() ! GetList
       case _ =>
     }
@@ -38,13 +41,16 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
   def waitingForCommand(myUid: String) : Actor.Receive = LoggingReceive {
     case x : JsValue => (x \ "t").as[String] match {
       case "CreateGame" =>
+        println("CreateGame")
         val player2 = (x \ "player2").as[String]
         GamesList() ! Pair(myUid, player2)
         Lobby() ! GetCompany(player2)
         context.become(sendingInvitationWaitingRoom(myUid))
       case "FindPlayers" =>
+        println("FindPlayers")
         Lobby() ! GetList
       case "Connect" =>
+        println("Connect")
         val player = (x \ "player").as[String]
         GamesList() ! FindGame(player)
         context.become(waitingRoom(myUid))
@@ -80,13 +86,13 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
   def waitingForSnake(myUid: String) = LoggingReceive {
     case x : SnakeCreated =>
       val snake = x.snake
-      context.system.scheduler.schedule(1.second, 10.seconds, sender, GetState)
+      snakeCancellable = context.system.scheduler.schedule(1.second, 100.millis, sender, GetState)
       out ! Json.toJson(Value("Status", "Snake created"))
       println("playing")
-      context.become(playing(snake))
+      context.become(playing(snake, myUid))
   }
 
-  def playing(snake: ActorRef) = LoggingReceive {
+  def playing(snake: ActorRef, myUid: String) = LoggingReceive {
     case x : JsValue => (x \ "t").as[String] match {
       case "Direction" =>
         val dir = (x \ "dir").as[String]
@@ -97,6 +103,10 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
           case "Right" => snake ! Right
           case _ =>
         }
+      case "Stop" =>
+        snakeCancellable.cancel()
+        GamesList() ! StopGame(myUid)
+        context.become(waitingForCommand(myUid))
       case _ =>
     }
     case State(snakes, food) =>
@@ -107,7 +117,7 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
 
 object WebSocketActor {
   case class Coordinate(x: Int, y: Int)
-  case class StateCoordinates(snakes: Iterable[List[Coordinate]], food: Coordinate)
+  case class StateCoordinates(snakes: Iterable[List[Coordinate]], food: Coordinate, t: String = "Coordinates")
   case class Value(t: String, value: String)
   def props(out: ActorRef) = Props(new WebSocketActor(out))
 }

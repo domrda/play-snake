@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/snake.less")">
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/snake.js")'></script>
+    </head>
+    <body>
+        <br/>
+        <button onclick="findPlayers()" id="findPlayers">Find</button>
+        <button onclick="connectToSelectedUser()" id="connectToSelectedUser">Connect</button>
+        <button onclick="stop()" id="stop">Stop</button>
+        <br/>
+        <select id="playersSelect" size="5" title="Players:">
+        </select>
+        <br/>
+        <div id="snakeYard">
+            <table>
+            @for(row <- 0 until actors.Games.fieldSize._1) {
+                <tr>
+                @for(col <- 0 until actors.Games.fieldSize._2; cnt = (row-1)*actors.Games.fieldSize._2+col) {
+                    <td id="snakeYardCell@row-@col">&nbsp;</td>
+                }
+                </tr>
+            }
+            </table>
+        </div>
+        <p id="status"></p>
+    </body>
+</html>

@@ -19,7 +19,7 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
     var generatedFood = nextCoupleInFieldSizes
     while (savedSnakePositions.exists(snakeToPositions => snakeToPositions._2.contains(generatedFood)))
       generatedFood = nextCoupleInFieldSizes
-    savedSnakePositions.keys foreach(_ ! Snake.Food(generatedFood))
+    snakeToPlayer.keys foreach(_ ! Snake.Food(generatedFood))
     generatedFood
   }
 
@@ -35,6 +35,7 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
     case Snake.SnakeState(pos) =>
       saveSnakePosition(pos)
     case Snake.AteFood =>
+      println("GameRoom: Ate food")
       food = genFood()
     case Messages.GetState =>
       sender ! Messages.State(savedSnakePositions.values, food)
@@ -52,10 +53,11 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
       food = genFood()
       sender ! Messages.SnakeCreated(createdSnake)
     }
-    if (snakeToPlayer.keys.size == players.size)
-      context.system.scheduler.schedule(initialDelay = 10.seconds, interval = 250.millis) {
-        savedSnakePositions.keys foreach(_ ! Snake.Move)
+    if (snakeToPlayer.keys.size == players.size) {
+      context.system.scheduler.schedule(initialDelay = 2.seconds, interval = 250.millis) {
+        snakeToPlayer.keys foreach (_ ! Snake.Move)
       }
+    }
   }
 
   def onSnakeDeath() = {
