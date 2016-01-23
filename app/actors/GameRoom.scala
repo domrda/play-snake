@@ -12,14 +12,14 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
 
   val random = scala.util.Random
   var savedSnakePositions: Map[ActorRef, List[(Int, Int)]] = Map.empty
-  var snakeToPlayer: Map[ActorRef, ActorRef] = Map.empty
+  var playerToSnake: Map[ActorRef, ActorRef] = Map.empty
   var food : (Int, Int) = genFood()
 
   def genFood() : (Int, Int) = {
     var generatedFood = nextCoupleInFieldSizes
     while (savedSnakePositions.exists(snakeToPositions => snakeToPositions._2.contains(generatedFood)))
       generatedFood = nextCoupleInFieldSizes
-    snakeToPlayer.keys foreach(_ ! Snake.Food(generatedFood))
+    playerToSnake.values foreach(_ ! Snake.Food(generatedFood))
     generatedFood
   }
 
@@ -38,7 +38,14 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
       println("GameRoom: Ate food")
       food = genFood()
     case Messages.GetState =>
-      sender ! Messages.State(savedSnakePositions.values, food)
+      if (playerToSnake.contains(sender())) {
+        val playerSnake = playerToSnake(sender())
+        val playerSnakePosition = if (savedSnakePositions.contains(playerSnake)) savedSnakePositions(playerSnake)
+          else List.empty
+        sender ! Messages.State(playerSnakePosition, savedSnakePositions.filter(_._1 != playerSnake).values, food)
+      } else {
+        sender ! Messages.State(List.empty, Iterable.empty, food)
+      }
     case x: Terminated =>
       println("Snake died")
     case other =>
@@ -48,20 +55,20 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
   def onPlayerConnection(uid: String) = {
     if (players.contains(uid)) {
       val createdSnake = context.system.actorOf(Props[Snake])
-      snakeToPlayer += createdSnake -> sender()
+      playerToSnake += sender() -> createdSnake
       context.watch(createdSnake)
       food = genFood()
       sender ! Messages.SnakeCreated(createdSnake)
     }
-    if (snakeToPlayer.keys.size == players.size) {
+    if (playerToSnake.values.size == players.size) {
       context.system.scheduler.schedule(initialDelay = 2.seconds, interval = 250.millis) {
-        snakeToPlayer.keys foreach (_ ! Snake.Move)
+        playerToSnake.values foreach (_ ! Snake.Move)
       }
     }
   }
 
   def onSnakeDeath() = {
-    snakeToPlayer -= sender()
+    playerToSnake = playerToSnake.filter(_._2 != sender())
     savedSnakePositions -= sender()
     sender() ! PoisonPill
   }

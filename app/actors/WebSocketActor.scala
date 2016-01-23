@@ -109,15 +109,17 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
         context.become(waitingForCommand(myUid))
       case _ =>
     }
-    case State(snakes, food) =>
+    case State(playerSnake, snakes, food) =>
       val transformedCoords = snakes.map(snake => snake.map(pair => new Coordinate(pair._1, pair._2)))
-      out ! Json.toJson(StateCoordinates(transformedCoords, new Coordinate(food._1, food._2)))
+      val playerSnakeTransformed = playerSnake.map(pair => new Coordinate(pair._1, pair._2))
+      out ! Json.toJson(StateCoordinates(playerSnakeTransformed, transformedCoords, new Coordinate(food._1, food._2)))
   }
 }
 
 object WebSocketActor {
   case class Coordinate(x: Int, y: Int)
-  case class StateCoordinates(snakes: Iterable[List[Coordinate]], food: Coordinate, t: String = "Coordinates")
+  case class StateCoordinates(playerSnake: List[Coordinate], snakes: Iterable[List[Coordinate]],
+                              food: Coordinate, t: String = "Coordinates")
   case class Value(t: String, value: String)
   def props(out: ActorRef) = Props(new WebSocketActor(out))
 }

@@ -16,7 +16,7 @@ object Messages {
   case class PlayerConnected(uid: String) extends Serializable
   case class SnakeCreated(snake: ActorRef) extends Serializable
   case object GetState extends Serializable
-  case class State(snakes: Iterable[List[(Int, Int)]], food: (Int, Int)) extends Serializable
+  case class State(playerSnake: List[(Int, Int)], snakes: Iterable[List[(Int, Int)]], food: (Int, Int)) extends Serializable
   case class Room(room: ActorRef) extends Serializable
   case class StopGame(uid: String) extends Serializable
   //Snake

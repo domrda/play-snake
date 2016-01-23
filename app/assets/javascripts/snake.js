@@ -1,4 +1,4 @@
-var ws = new WebSocket("ws://localhost:9000/ws");
+var ws = new WebSocket("ws://" + window.location.host + "/ws");
 var select = null;
 var row = 16;
 var col = 16;
@@ -19,6 +19,7 @@ ws.onmessage = function (evt) {
                 option.text = item;
                 select.add(option);
             });
+            select.selectedIndex = 0;
             break;
         case "Invitation":
             ws.send(JSON.stringify({t: "Connect", player:parsedData.value}));
@@ -29,9 +30,12 @@ ws.onmessage = function (evt) {
         case "Coordinates":
             cleanField();
             apple("snakeYardCell" + parsedData.food.y + "-" + parsedData.food.x);
+            parsedData.playerSnake.forEach(function(node) {
+                playerSnakeColouring("snakeYardCell" + node.y + "-" + node.x);
+            });
             parsedData.snakes.forEach(function(snake) {
                 snake.forEach(function(node) {
-                    on("snakeYardCell" + node.y + "-" + node.x);
+                    enemySnakeColouring("snakeYardCell" + node.y + "-" + node.x);
                 });
             });
             break;
@@ -76,16 +80,20 @@ function findPlayers() {
     ws.send(JSON.stringify({t: "FindPlayers"}));
 }
 
-function on(elementId) {
-    changeBackground("#FF0000", elementId);
+function playerSnakeColouring(elementId) {
+    changeBackground("#F68D35", elementId);
+}
+
+function enemySnakeColouring(elementId) {
+    changeBackground("#899DD0", elementId);
 }
 
 function off(elementId) {
-    changeBackground("#bbbbbb", elementId);
+    changeBackground("#d0d0d0", elementId);
 }
 
 function apple(elementId) {
-    changeBackground("#9ACD32", elementId);
+    changeBackground("#7AE884", elementId);
 }
 
 function changeBackground(newBackground, elementId) {
