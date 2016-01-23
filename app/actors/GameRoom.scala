@@ -38,14 +38,9 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
       println("GameRoom: Ate food")
       food = genFood()
     case Messages.GetState =>
-      if (playerToSnake.contains(sender())) {
-        val playerSnake = playerToSnake(sender())
-        val playerSnakePosition = if (savedSnakePositions.contains(playerSnake)) savedSnakePositions(playerSnake)
-          else List.empty
-        sender ! Messages.State(playerSnakePosition, savedSnakePositions.filter(_._1 != playerSnake).values, food)
-      } else {
-        sender ! Messages.State(List.empty, Iterable.empty, food)
-      }
+      val playerSnake = playerToSnake.applyOrElse(sender(), (_ : ActorRef) => ActorRef.noSender)
+      sender ! Messages.State(savedSnakePositions.applyOrElse(playerSnake, (_ : ActorRef) => List.empty),
+        savedSnakePositions.filter(_._1 != playerSnake).values, food)
     case x: Terminated =>
       println("Snake died")
     case other =>
