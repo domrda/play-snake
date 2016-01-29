@@ -63,7 +63,7 @@ function stop() {
 }
 
 function cleanField() {
-    for ( i = 0; i < row; i++) {
+    for (i = 0; i < row; i++) {
         for (j = 0; j < col; j++) {
             off("snakeYardCell" + i + "-" + j);
         }
@@ -71,7 +71,14 @@ function cleanField() {
 }
 
 function connectToSelectedUser() {
-    ws.send(JSON.stringify({t: "CreateGame", player2:select.value}));
+    var players = [];
+    for(i=select.options.length-1;i>=0;i--)
+    {
+        if (select.options[i].selected === true) {
+            players.push(select.options[i].text);
+        }
+    }
+    ws.send(JSON.stringify({t: "CreateGame", players:players}));
 }
 
 function findPlayers() {

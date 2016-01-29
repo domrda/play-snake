@@ -42,9 +42,9 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
     case x : JsValue => (x \ "t").as[String] match {
       case "CreateGame" =>
         println("CreateGame")
-        val player2 = (x \ "player2").as[String]
-        GamesList() ! Pair(myUid, player2)
-        Lobby() ! GetCompany(player2)
+        val players = (x \ "players").as[List[String]]
+        GamesList() ! CreateGame(myUid, players)
+        Lobby() ! GetCompany(players)
         context.become(sendingInvitationWaitingRoom(myUid))
       case "FindPlayers" =>
         println("FindPlayers")
@@ -66,13 +66,13 @@ class WebSocketActor(out: ActorRef) extends Actor with ActorLogging {
     case Messages.Room(room) =>
       context.become(sendingInvitation(myUid, room))
     case Company(company) =>
-      company ! Invitation(myUid)
+      company foreach (_ ! Invitation(myUid))
       context.become(waitingRoom(myUid))
   }
 
   def sendingInvitation(myUid: String, room: ActorRef) = LoggingReceive {
     case Company(company) =>
-      company ! Invitation(myUid)
+      company foreach (_ ! Invitation(myUid))
       room ! PlayerConnected(myUid)
       context.become(waitingForSnake(myUid))
   }

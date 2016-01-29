@@ -8,8 +8,8 @@ class GamesList extends Actor with ActorLogging {
   var games : Map[String, ActorRef] = Map.empty
 
   override def receive: Actor.Receive = {
-    case Messages.Pair(player1, player2) =>
-      startGameForPlayers(List(player1, player2))
+    case Messages.CreateGame(player, players) =>
+      startGameForPlayers(player :: players)
     case Messages.FindGame(player) =>
       sender ! Messages.Room(games(player))
     case Messages.StopGame(uid) =>

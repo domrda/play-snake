@@ -9,7 +9,7 @@ object Games {
 
 object Messages {
   //Web
-  case class Pair(player1: String, player2: String) extends Serializable
+  case class CreateGame(player: String, players: List[String]) extends Serializable
   case class Invitation(other: String) extends Serializable
   case class FindGame(uid: String) extends Serializable
   //Games
@@ -29,6 +29,6 @@ object Messages {
   case object Started extends Serializable
   case object GetList extends Serializable
   case class Players(me: String, everybody: Iterable[String], t: String = "Players") extends Serializable
-  case class GetCompany(other: String) extends Serializable
-  case class Company(other: ActorRef) extends Serializable
+  case class GetCompany(others: List[String]) extends Serializable
+  case class Company(other: Iterable[ActorRef]) extends Serializable
 }

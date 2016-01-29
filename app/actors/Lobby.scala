@@ -20,7 +20,7 @@ class Lobby extends Actor {
     case Terminated =>
       players -= sender
     case Messages.GetCompany(other) =>
-      val company = players.find(p => p._2 == other).head._1
+      val company = players.filter(p => other.contains(p._2)).keys
       sender ! Messages.Company(company)
     case other =>
       println("Something strange come to lobby: " + other)
