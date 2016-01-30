@@ -6,29 +6,30 @@ import play.libs.Akka
 import scala.util.Random
 
 class Lobby extends Actor {
+  import Messages._
   var players : Map[ActorRef, String] = Map.empty
 
   def generatePlayerName = Seq.fill(4)(Random.nextInt(Lobby.words.size)).map(i => Lobby.words(i)).mkString
 
   def receive = {
-    case Messages.Started =>
+    case Started =>
       context.watch(sender)
       players += sender -> generatePlayerName
       sendPlayers()
-    case Messages.GetList =>
+    case GetList =>
       sendPlayers()
     case Terminated =>
       players -= sender
-    case Messages.GetCompany(other) =>
+    case GetCompany(other) =>
       val company = players.filter(p => other.contains(p._2)).keys
-      sender ! Messages.Company(company)
+      sender ! Company(company)
     case other =>
       println("Something strange come to lobby: " + other)
   }
 
   def sendPlayers() = {
     val filtered = players filter(p => p._1 != sender)
-    sender ! Messages.Players(players(sender), filtered.values)
+    sender ! Players(players(sender), filtered.values)
   }
 }
 

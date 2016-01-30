@@ -5,6 +5,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 
 class GameRoom(players: List[String]) extends Actor with ActorLogging {
+  import Messages._
   import concurrent.ExecutionContext.Implicits.global
   implicit val timeout : Timeout = 1.second
 
@@ -28,7 +29,7 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
       random.nextInt(Games.fieldSize._2) )
 
   override def receive: Receive = {
-    case Messages.PlayerConnected(uid) =>
+    case PlayerConnected(uid) =>
       onPlayerConnection(uid)
     case Snake.AteItself =>
       onSnakeDeath()
@@ -37,9 +38,9 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
     case Snake.AteFood =>
       println("GameRoom: Ate food")
       food = genFood()
-    case Messages.GetState =>
+    case GetState =>
       val playerSnake = playerToSnake.applyOrElse(sender(), (_ : ActorRef) => ActorRef.noSender)
-      sender ! Messages.State(savedSnakePositions.applyOrElse(playerSnake, (_ : ActorRef) => List.empty),
+      sender ! State(savedSnakePositions.applyOrElse(playerSnake, (_ : ActorRef) => List.empty),
         savedSnakePositions.filter(_._1 != playerSnake).values, food)
     case x: Terminated =>
       println("Snake died")
@@ -53,7 +54,7 @@ class GameRoom(players: List[String]) extends Actor with ActorLogging {
       playerToSnake += sender() -> createdSnake
       context.watch(createdSnake)
       food = genFood()
-      sender ! Messages.SnakeCreated(createdSnake)
+      sender ! SnakeCreated(createdSnake)
     }
     if (playerToSnake.values.size == players.size) {
       context.system.scheduler.schedule(initialDelay = 2.seconds, interval = 250.millis) {
